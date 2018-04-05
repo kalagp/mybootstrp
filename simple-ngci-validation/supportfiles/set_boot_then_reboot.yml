@@ -1,0 +1,25 @@
+---
+- hosts: myhosts
+  name: Set one-time BIOS boot device
+  gather_facts: False
+
+  # Bootdevice options include: None, Pxe, Cd, Floppy, Hdd, BiosSetup,
+  # Utilities, UefiTarget & SDCard
+
+  vars:
+    - bootdevice: Pxe
+
+  tasks:
+
+  - name: Set one-time boot device to {{bootdevice}}
+    local_action: >
+       redfish category=System command=SetOneTimeBoot baseuri={{baseuri}}
+       user={{user}} password={{password}} bootdevice={{bootdevice}}
+    ignore_errors: yes
+    tags: setonetimebootdevice
+
+  - name: Graceful system power restart
+    local_action: >
+       redfish category=System command=PowerGracefulRestart baseuri={{baseuri}}
+       user={{user}} password={{password}}
+

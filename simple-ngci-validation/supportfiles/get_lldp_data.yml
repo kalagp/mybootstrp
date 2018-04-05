@@ -1,0 +1,27 @@
+---
+ - hosts: cisco
+   gather_facts: no
+   connection: local
+
+   tasks:
+   - name: Get creds
+     include_vars: secrets.yml
+
+   - name: Define provider
+     set_fact:
+       provider:
+         host: "{{ inventory_hostname }}"
+         username: "{{ creds['username'] }}"
+         password: "{{ creds['password']}}"
+         auth_pass: "{{ creds['auth_pass']}}"
+
+   - name: show lldp neighbors
+     ios_command:
+       provider: "{{ provider }}"
+       commands:
+         - show lldp neighbors  
+     register: version
+    
+   - debug: var=version.stdout_lines
+...
+
