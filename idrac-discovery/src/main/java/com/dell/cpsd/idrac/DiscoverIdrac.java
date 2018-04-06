@@ -92,16 +92,19 @@ public class DiscoverIdrac
         restTemplate.setErrorHandler(new CustomResponseErrorHandler());
         for (String ip : ipsToSearch)
         {
-            String url = String.format("https://%s/cgi-bin/discover", ip);
-            try
+            if (ping(ip))
             {
-                Compute compute = restTemplate.getForObject(url, Compute.class);
-                compute.setIp(ip);
-                discovered.add(compute);
-            }
-            catch (RestClientException e)
-            {
-                log.debug("No response from ip: " + ip);
+                String url = String.format("https://%s/cgi-bin/discover", ip);
+                try
+                {
+                    Compute compute = restTemplate.getForObject(url, Compute.class);
+                    compute.setIp(ip);
+                    discovered.add(compute);
+                }
+                catch (RestClientException e)
+                {
+                    log.debug("No response from ip: " + ip);
+                }
             }
         }
         return discovered;
