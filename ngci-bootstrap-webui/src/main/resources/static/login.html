@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>App Demo</title>
+    <script src="js/angular.min.js"></script>
+    <script src="js/angular-cookies.min.js"></script>
+    <script src="js/angular-resource.min.js"></script>
+    <script src="js/angular-route.min.js"></script>
+
+    <script src="js/secureApp.js"></script>
+
+    
+    <link rel="stylesheet" href="css/bootstrap.css"/>
+</head>
+<body ng-app="myApp" ng-controller="mainCtrl">
+
+    <div class="container">
+
+        <h1 class="col-sm-12">Login</h1>
+        <div class="col-sm-6">
+            <div class="col-sm-12">
+                <label class="col-sm-3">Username</label>
+                <input class="form-control" type="text" ng-model="loginData.username"/>
+            </div>
+
+            <div class="col-sm-12">
+                <label class="col-sm-3">Password</label>
+                <input class="form-control" type="password" ng-model="loginData.password"/>
+            </div>
+
+            <div class="col-sm-12">
+                <a class="btn btn-default" href="#" ng-click="login()">Login</a>
+            </div>
+            <div class="col-sm-12">
+                <span ng-bind="error"></span>
+            </div>
+        </div>
+    </div>    
+
+</body>
+</html>

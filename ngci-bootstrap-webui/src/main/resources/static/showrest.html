@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>App Demo</title>
+    <script src="js/angular.min.js"></script>
+    <script src="js/angular-cookies.min.js"></script>
+    <script src="js/angular-resource.min.js"></script>
+    <script src="js/angular-route.min.js"></script>
+
+    <script src="js/secureApp.js"></script>
+
+    
+    <link rel="stylesheet" href="css/bootstrap.css"/>
+</head>
+<body ng-app="myApp" ng-controller="mainCtrl">
+
+    <div class="container">
+            <div class="col-sm-12">
+                <a class="btn btn-default" href="#" ng-click="getData()">GetData</a>
+                <input class="form-control" type="text" ng-model="restapi.place"/>
+            </div>
+            <div class="col-sm-12">
+                <pre ng-bind="dataResult"></pre>
+            </div>
+             <div class="col-sm-12">
+                <span ng-bind="error"></span>
+            </div>
+   </div>    
+
+</body>
+</html>

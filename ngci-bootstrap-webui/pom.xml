@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Copyright (c) 2017 Dell Inc. or its subsidiaries.  All Rights Reserved.
+    Dell EMC Confidential/Proprietary Information
+ -->
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>ngci-bootstrap-webui</artifactId>
+    <packaging>jar</packaging>
+
+    <name>NGCI Bootstrap Integration UI</name>
+    <description>NGCI Bootstrap Integration UI</description>
+    <groupId>com.dell.cpsd.demo</groupId>
+    <version>1.0.0</version>
+
+
+    <properties>
+        <!-- The project build source encoding property -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Docker Registry local -->
+        <docker.registry>docker-dev-local.art.local</docker.registry>
+
+        <!-- Maven plugins -->
+        <plugin-maven-compiler-version>3.3</plugin-maven-compiler-version><!-- there is 3.5.1 already -->
+        <plugin-maven-dependency-version>2.10</plugin-maven-dependency-version>
+        <maven-jar-plugin.version>3.0.2</maven-jar-plugin.version>
+
+        <!-- Java version -->
+        <java-version>1.8</java-version>
+
+        <junit.version>4.12</junit.version>
+        <spring.boot.version>1.5.3.RELEASE</spring.boot.version>
+        <jackson-core-version>2.8.5</jackson-core-version>
+        <mockito.version>1.10.19</mockito.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- Embedded container (Tomcat) support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+
+         
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-core-version}</version>
+        </dependency>
+  
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring.boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+            <version>${mockito.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <plugins>
+            <!-- Copy LICENSE file -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <!-- here the phase you need -->
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <resources>          
+                                <resource>
+                                    <filtering>true</filtering>
+                                    <!-- if it is neccessary -->
+                                    <directory>${project.basedir}/..</directory>
+                                    <!-- from (mvn 3.0.4 broke use of ${project.parent.basedir})-->
+                                    <targetPath>${project.build.directory}/classes</targetPath>
+                                    <!-- to -->
+                                    <includes>
+                                        <!-- what -->
+                                        <include>LICENSE.md</include>
+                                    </includes>
+                                </resource>
+                            </resources>              
+                        </configuration>            
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- setup lib directory of dependencies -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <useSubDirectoryPerScope>false</useSubDirectoryPerScope>
+                            <excludeTransitive>false</excludeTransitive>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- Build Executable jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <useUniqueVersions>false</useUniqueVersions>
+                        </manifest>
+                        <addMavenDescriptor>false</addMavenDescriptor>
+                        <manifestEntries>
+                            <Bundle-SymbolicName/>
+                            <Bundle-Name/>
+                            <Built-By>Dell EMC Development</Built-By>
+                            <Main-Class>com.dell.cpsd.bootstrap.BootStrapWeb</Main-Class>
+                            <Export-Package/>
+                            <Class-Path>. ${project.artifact.artifactId}-${project.artifact.version}.jar</Class-Path>
+                        </manifestEntries>
+                    </archive>
+                    <includes>
+                        <include>**/*.class</include>
+                        <include>**/banner.txt</include>
+                        <include>**/*.xml</include>
+                        <include>**/*.properties</include>
+                        <include>LICENSE.md</include>
+                        <include>**/webapp/**</include>
+                        <include>**/public/**</include>
+                        <include>**/static/**</include>
+                    </includes>
+                    <!-- -->
+                    <excludes>
+                    </excludes>
+                </configuration>
+            </plugin>
+            
+         </plugins>
+    </build>
+    
+</project>
