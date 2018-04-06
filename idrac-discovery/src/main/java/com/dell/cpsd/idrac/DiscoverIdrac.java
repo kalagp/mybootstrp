@@ -92,19 +92,25 @@ public class DiscoverIdrac
         restTemplate.setErrorHandler(new CustomResponseErrorHandler());
         for (String ip : ipsToSearch)
         {
-            if (ping(ip))
+            try
             {
+                String hostName = getHostNameForIp(ip);
                 String url = String.format("https://%s/cgi-bin/discover", ip);
                 try
                 {
                     Compute compute = restTemplate.getForObject(url, Compute.class);
                     compute.setIp(ip);
+                    compute.setHostName(hostName);
                     discovered.add(compute);
                 }
                 catch (RestClientException e)
                 {
-                    log.debug("No response from ip: " + ip);
+                    log.debug("No iDrac response from ip: " + ip);
                 }
+            }
+            catch (UnknownHostException e)
+            {
+                log.debug("Cannot reach ip: " + ip);
             }
         }
         return discovered;
@@ -127,9 +133,10 @@ public class DiscoverIdrac
         return requestFactory;
     }
 
-    protected boolean ping(String ip)
+    protected String getHostNameForIp(String ip) throws UnknownHostException
     {
         boolean found = true;
+        String hostName = null;
 
         String[] parts = ip.split("\\.");
         int part1 = Integer.parseInt(parts[0]);
@@ -138,22 +145,24 @@ public class DiscoverIdrac
         int part4 = Integer.parseInt(parts[3]);
         byte[] address = {(byte) part1, (byte) part2, (byte) part3, (byte) part4};
 
+        InetAddress addr = InetAddress.getByAddress(address);
         try
         {
-            InetAddress addr = InetAddress.getByAddress(address);
-            found = addr.isReachable(100);
-        }
-        catch (UnknownHostException e)
-        {
-            found = false;
+            if (addr.isReachable(100))
+            {
+                hostName = InetAddress.getByAddress(address).getHostName();
+            }
+            else
+            {
+                throw new UnknownHostException();
+            }
         }
         catch (IOException e)
         {
-            found = false;
-            ;
+            throw new UnknownHostException();
         }
 
-        return found;
+        return hostName;
     }
 
     private static SSLContext getSSlContext()

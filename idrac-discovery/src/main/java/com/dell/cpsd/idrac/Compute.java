@@ -15,6 +15,8 @@ public class Compute
     @XmlElement(name = "RESP")
     private InnerCompute resp;
     private String       ip;
+    String hostName;
+
 
     public String getIp()
     {
@@ -24,6 +26,16 @@ public class Compute
     public void setIp(final String ip)
     {
         this.ip = ip;
+    }
+
+    public String getHostName()
+    {
+        return hostName;
+    }
+
+    public void setHostName(final String hostName)
+    {
+        this.hostName = hostName;
     }
 
     public String getEndPointType()

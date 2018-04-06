@@ -28,7 +28,7 @@ public class Application
             List<Compute> discovered = discover.discoverIdracs(addr);
             for (Compute compute : discovered)
             {
-                System.out.format("iDrac IP:  %s, Type: %s\n", compute.getIp(), compute.getEndPointType());
+                System.out.format("iDrac IP: %s, Hostname: %s, Type: %s\n", compute.getIp(), compute.getHostName(), compute.getEndPointType());
             }
         }
         catch (Exception e)
