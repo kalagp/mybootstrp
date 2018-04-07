@@ -37,6 +37,8 @@ public class BootStrapWeb extends SpringBootServletInitializer
 
     static ArrayList<String> execResults = new ArrayList<String>();
     
+    static int jobCounter = 0;
+    
     HashMap<Long,JobDetail> currentJobs = new HashMap<Long,JobDetail>();
     
     @RequestMapping("/hello")
@@ -48,45 +50,61 @@ public class BootStrapWeb extends SpringBootServletInitializer
         return "welcome";
     }
     
+    @RequestMapping("/resultstxt")
+    @ResponseBody
+    public ArrayList<String> results()
+    {
+        ArrayList<String> response = new ArrayList<String>();
+        response.add("Actual Results:");
+        response.addAll(execResults);
+        return response;
+    }
+
     @RequestMapping(value = "/exectest", method = RequestMethod.POST)
     public String doWork()
     {
+        
         System.out.println("POST CAlled on " + OS);
         execResults.clear();
         ExecProcess execProcess = new ExecProcess();
         //execProcess.setTask("do_test.sh");
+
+        JobDetail newJob = new JobDetail();
+        // jobid to var, wipe old one from mem first/?
+        newJob.setJobId((jobCounter++ % 10) + 1);
+        newJob.setProgress(0);
+
         
         if(OS.indexOf("win") >= 0)
         {
-            execProcess.setTask("testjob.cmd");
+            execProcess.setTask("testjob.cmd " + newJob.getJobId());
             execProcess.setShellUse(false);
         }
         else
         {
-            execProcess.setTask("testjob.sh");
+            execProcess.setTask("testjob.sh " + newJob.getJobId());
         }
+
+        newJob.addMessages("Starting " + execProcess.getTask());
          
-        JobDetail newJob = new JobDetail();
         
         Thread thread = new Thread(execProcess);
-        newJob.setJobId(thread.getId());
-        newJob.setProgress(0);
-        newJob.addMessages("Starting " + execProcess.getTask());
         
         if(currentJobs.size() > 9)
         {
             System.out.print("Need to prune JOBS");
         }
         
+        System.out.println("ADDING JOB " + newJob.getJobId());
         currentJobs.put(newJob.getJobId(), newJob);
         
         thread.start();
-        return "redirect:./results/" + thread.getId();
+        return "redirect:./results/" + newJob.getJobId();
     }
 
     @RequestMapping(value = "/status", method = RequestMethod.POST)
     public ResponseEntity<String> updateJobStatus(@RequestParam("jobid") long jobId, 
-            @RequestParam("progresss") int progress, @RequestParam("message") String message)
+            @RequestParam("progress") int progress, @RequestParam("message") String message)
     {
         JobDetail job = currentJobs.get(jobId);
         
@@ -183,12 +201,13 @@ public class BootStrapWeb extends SpringBootServletInitializer
                     app = r.exec(cmd);
                 }
 
-                System.out.println("In ExecProcess after exec");
+                System.out.println("In ExecProcess after exec [" + commandLine + "] " + app.toString());
                 output = new BufferedReader(new InputStreamReader(app.getInputStream()));
                 
                 while(true)
                 {
                     line = output.readLine();
+                    System.out.println(line);
                     if(line == null)
                     {
                         System.out.println("In ExecProcess after EOF");
