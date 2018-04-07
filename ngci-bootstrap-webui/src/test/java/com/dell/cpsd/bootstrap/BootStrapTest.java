@@ -3,14 +3,14 @@
  * Dell EMC Confidential/Proprietary Information
  */
 
-package com.dell.cpsd.simpleweb;
+package com.dell.cpsd.bootstrap;
 
 import static org.junit.Assert.assertNotEquals;
 
 import org.junit.Before;
 import org.junit.Test;
 
-public class SecurityServiceTest
+public class BootStrapTest
 {
     @Before
     public void setup()
@@ -21,6 +21,4 @@ public class SecurityServiceTest
     public void test1() throws Exception
     {
     }
-    
-
-}
+}    
