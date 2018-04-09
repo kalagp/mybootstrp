@@ -105,10 +105,18 @@ public class BootStrapWeb extends SpringBootServletInitializer
         currentJobs.put(newJob.getJobId(), newJob);
         
         Thread thread = new Thread(execProcess);
-        
         thread.start();
         return "redirect:./results/" + newJob.getJobId();
     }
+
+    @RequestMapping(value = "/startjob", method = RequestMethod.POST)
+    public String startNewJob(@RequestParam("job") String job)
+    {
+        Long newJobId = -1L;
+        newJobId = forkJob(job, (OS.indexOf("win") == -1));
+        return "redirect:./results/" + newJobId;
+    }
+
     
     // TODO
     public Long forkJob(String executable, boolean useCommandShell)
