@@ -53,8 +53,12 @@ public class BootStrapWeb extends SpringBootServletInitializer
     //public String getJobs(Map<String,Object> jobs, HttpServletRequest request)
     public String getJobs( HttpServletRequest request)
     {
-        doWork();
-        
+        // TODO Remove
+        if (currentJobs.size() == 0)
+        {
+            doWork();
+        }
+
         request.setAttribute("jobList", currentJobs);
         return "JobsList";
     }
@@ -84,7 +88,7 @@ public class BootStrapWeb extends SpringBootServletInitializer
         JobDetail newJob = new JobDetail();
         // jobid to var, wipe old one from mem first/?
         newJob.setJobId(newJobId);
-        newJob.setJobName("testjob");
+        newJob.setJobName("Internal testjob");
         newJob.setProgress(0);
         
         execProcess.setJobId(newJobId);
@@ -105,10 +109,18 @@ public class BootStrapWeb extends SpringBootServletInitializer
         currentJobs.put(newJob.getJobId(), newJob);
         
         Thread thread = new Thread(execProcess);
-        
         thread.start();
         return "redirect:./results/" + newJob.getJobId();
     }
+
+    @RequestMapping(value = "/startjob", method = RequestMethod.POST)
+    public String startNewJob(@RequestParam("job") String job)
+    {
+        Long newJobId = -1L;
+        newJobId = forkJob(job, (OS.indexOf("win") == -1));
+        return "redirect:./results/" + newJobId;
+    }
+
     
     // TODO
     public Long forkJob(String executable, boolean useCommandShell)
