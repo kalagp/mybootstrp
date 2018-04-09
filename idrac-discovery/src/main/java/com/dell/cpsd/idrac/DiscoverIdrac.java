@@ -148,7 +148,7 @@ public class DiscoverIdrac
         InetAddress addr = InetAddress.getByAddress(address);
         try
         {
-            if (addr.isReachable(100))
+            if (addr.isReachable(2000))
             {
                 hostName = addr.getHostName();
             }
