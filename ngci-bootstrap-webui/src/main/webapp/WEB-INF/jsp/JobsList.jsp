@@ -28,6 +28,7 @@
 		<th>progress</th>
 		<th>Log Message</th>
 		<th>Console Output</th>
+		<th>Job Parameters</th>
 	</tr>
 <c:forEach items="${jobList}" var="job">
 	<tr>
@@ -47,6 +48,17 @@
         		<li>${consolemessage}</li>
             </c:forEach>
             </ol>
+		</td>
+		<td>
+			<ul>
+		    <c:forEach items="${job.value.parameters}" var="parameters">
+	        		<li>${parameters.key} == [
+					    <c:forEach items="${parameters.value}" var="parameter" varStatus="loop">
+			        		${parameter}${!loop.last ? ',' : ''}
+			            </c:forEach>
+			            ]
+            </c:forEach>
+            </ul>
 		</td>
 	</tr>
 </c:forEach>

@@ -11,7 +11,18 @@
 
 
     <form action='./startjob' method='post'>
-        <input name="job" type="text" value="testjob.cmd">
+        <input name="job" type="text" value="testjob.cmd"><br>
+        <input name="custom" type="text" value="Data I want to enter"><br>
+        <select name="cars" multiple>
+		  <option value="volvo">Volvo</option>
+		  <option value="saab">Saab</option>
+		  <option value="opel">Opel</option>
+		  <option value="audi">Audi</option>
+		</select>
+        <input type="hidden" name="var1" value="abc">
+        <input type="hidden" name="var2" value="Number 2">
+        <input type="hidden" name="var3" value="Three">
+        <input type="hidden" name="ip" value="10.1.1.2">
         <input type='submit' value='Execute Local Test Job'>
     </form>
 

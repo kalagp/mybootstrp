@@ -9,9 +9,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.boot.SpringApplication;
@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+
 
 // Will have a hash map of jobs, ID {[messages,...],progress}
 // To limit memory usage, we will keep depth at 10 (MAX_NUMBER_JOBS)
@@ -51,7 +53,7 @@ public class BootStrapWeb extends SpringBootServletInitializer
 
     @RequestMapping("/jobs")
     //public String getJobs(Map<String,Object> jobs, HttpServletRequest request)
-    public String getJobs( HttpServletRequest request)
+    public String getJobs(HttpServletRequest request)
     {
         // TODO Remove
         if (currentJobs.size() == 0)
@@ -91,6 +93,11 @@ public class BootStrapWeb extends SpringBootServletInitializer
         newJob.setJobName("Internal testjob");
         newJob.setProgress(0);
         
+        Map<String, String[]> dummyArgs= new HashMap<String, String[]>();
+        
+        dummyArgs.put("arg1", new String[]{"one", "two", "333"});
+        newJob.setParameters(dummyArgs);
+       
         execProcess.setJobId(newJobId);
         
         if(OS.indexOf("win") >= 0)
@@ -114,16 +121,27 @@ public class BootStrapWeb extends SpringBootServletInitializer
     }
 
     @RequestMapping(value = "/startjob", method = RequestMethod.POST)
-    public String startNewJob(@RequestParam("job") String job)
+    public String startNewJob(@RequestParam("job") String job, HttpServletRequest request)
     {
         Long newJobId = -1L;
-        newJobId = forkJob(job, (OS.indexOf("win") == -1));
+
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        Map<String, String[]> parameters = new HashMap<String, String[]>();
+
+        for (String key : parameterMap.keySet())
+        {
+            parameters.put(key, parameterMap.get(key));
+            String[] values = parameterMap.get(key);
+            //System.out.println("ParamerName: " + key + "-->" + String.join(",", values));
+        }
+
+        newJobId = forkJob(job, parameters, (OS.indexOf("win") == -1));
+        
         return "redirect:./results/" + newJobId;
     }
-
     
     // TODO
-    public Long forkJob(String executable, boolean useCommandShell)
+    public Long forkJob(String executable, Map<String, String[]> parameters, boolean useCommandShell)
     {
         Long newJobId = (long) ((jobCounter++ % MAX_NUMBER_JOBS) + 1);
         
@@ -133,7 +151,7 @@ public class BootStrapWeb extends SpringBootServletInitializer
             {
                 System.out.println("Job queue may be full");
                 return -1L;
-            }
+            }   
             else
             {
                 // Destroy old job
@@ -142,7 +160,6 @@ public class BootStrapWeb extends SpringBootServletInitializer
         }
         
         ExecProcess execProcess = new ExecProcess();
-
         
         execProcess.setJobId(newJobId);
         execProcess.setTask(executable + " " + newJobId);
@@ -153,6 +170,7 @@ public class BootStrapWeb extends SpringBootServletInitializer
         newJob.setJobName(executable);
         newJob.setProgress(0);
         newJob.addMessage("Starting " + execProcess.getTask());
+        newJob.setParameters(parameters);
         
         Thread thread = new Thread(execProcess);
         
@@ -181,6 +199,14 @@ public class BootStrapWeb extends SpringBootServletInitializer
         return new ResponseEntity("Status updated", HttpStatus.CREATED);
     }
     
+    @RequestMapping(value = "/jobdetails/{jobid}", method = RequestMethod.GET)
+    @ResponseBody
+    public JobDetail results(@PathVariable("jobid") long jobId)
+    {
+        JobDetail job = currentJobs.get(jobId);
+        return job;
+    }
+
     @RequestMapping(value = "/results/{jobid}", method = RequestMethod.GET)
     public String getFoosBySimplePathWithPathVariable(@PathVariable("jobid") long jobId, Map<String, Object> results)
     {
@@ -198,11 +224,12 @@ public class BootStrapWeb extends SpringBootServletInitializer
 
     public class JobDetail
     {
-        long              jobId;
-        String            jobName;
-        int               progress;
-        ArrayList<String> messages = new ArrayList<String>();
-        ArrayList<String> consoleMessages = new ArrayList<String>();
+        long                    jobId;
+        String                  jobName;
+        int                     progress;
+        ArrayList<String>       messages        = new ArrayList<String>();
+        ArrayList<String>       consoleMessages = new ArrayList<String>();
+        Map<String, String[]>   parameters      = new HashMap<String, String[]>();
 
         public long getJobId()
         {
@@ -263,6 +290,21 @@ public class BootStrapWeb extends SpringBootServletInitializer
         {
             this.consoleMessages.add(message);
         }
+
+        public Map<String, String[]> getParameters()
+        {
+            return parameters;
+        }
+
+        public void setParameters(Map<String, String[]> parameters)
+        {
+            this.parameters = parameters;
+        }
+        
+        public void addParameter(String key, String[] value)
+        {
+            this.parameters.put(key, value);
+        }
     }
 
     public class ExecProcess implements Runnable
@@ -310,9 +352,9 @@ public class BootStrapWeb extends SpringBootServletInitializer
                         System.out.flush();
                         break;
                     }
-                    System.out.println(currentJobs);
-                    System.out.println(line);
-                    System.out.println(currentJobs.get(this.jobId));
+                    //System.out.println(currentJobs);
+                    //System.out.println(line);
+                    //System.out.println(currentJobs.get(this.jobId));
                     currentJobs.get(this.jobId).addConsoleMessage(line);
                 }
             }
