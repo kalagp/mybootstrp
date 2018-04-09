@@ -13,15 +13,25 @@ print('')
 print('Start...')
 print('')
 
-# TO DO
-# Add Call to UI API to show step completed
+#jobid = 5
+#payload = {'jobid': jobid, 'progress': 0, 'message': 'Started'}
+#resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=payload)
+#print(resp)
+
+#resp = requests.post('http://localhost:8300/bootstrap/jobdetails/1')
 
 #input_json = '{"idrac_ip":"10.234.122.15","node_ip":"172.31.128.14","node_disk_name":"ATA","esxi_version":"6.5","esxi_hostname":"rvx2-host06","esxi_ip":"10.234.122.76","esxi_netmask":"255.255.255.192","esxi_gateway":"10.234.122.65","esxi_dns":"10.136.112.220","esxi_dns_search":"lab.vce.com","esxi_nic":"vmnic1","esxi_vlanid":"126","esxi_root_password":"Vc3m0l@b","esxi_accepteula":"true"}'
 
 # Set Arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--input_json', required=True)
+#parser.add_argument('--input_json', required=True)
+parser.add_argument('--jobid', required=True)
 args = parser.parse_args()
+my_jobid = args.jobid
+resp = requests.post('http://localhost:8400/bootstrap/jobdetails/' + my_jobid')
+
+#payload = {'jobid': jobid, 'progress': 0, 'message': 'Started'}
+#resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=payload)
 
 input_json = args.input_json
 input_json = json.loads(input_json)
@@ -75,6 +85,8 @@ with open('/var/lib/tftpboot/pxelinux.cfg/' + hex_file_name, 'w') as my_file_han
     my_file_handle.write(my_file_contents)
 # TO DO
 # Add Call to UI API to show step completed
+#payload = {'jobid': jobid, 'progress': 30, 'message': 'Files Created'}
+#resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=payload)
 
 # Set Kiickstart File Content
 my_file_contents = '##### Stage 01 - Pre installation:	\n'
@@ -115,6 +127,8 @@ with open('/var/www/lighttpd/esxi_ksFiles/' + ks_file_name, 'w') as my_file_hand
 # Add Call to UI API to show step completed
 
 # PXE Boot Node
+#payload = {'jobid': jobid, 'progress': 75, 'message': 'PXE Booting'}
+#resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=payload)
 os.system('ansible-playbook set_boot_then_reboot.yml')
 # TO DO
 # Add Call to UI API to show step completed
