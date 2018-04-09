@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import requests
 import sys
 
 #################### Start Functions ####################
@@ -113,9 +114,12 @@ with open('/var/www/lighttpd/esxi_ksFiles/' + ks_file_name, 'w') as my_file_hand
 # TO DO
 # Add Call to UI API to show step completed
 
+# PXE Boot Node
+os.system('ansible-playbook set_boot_then_reboot.yml')
 # TO DO
-# Add Call to Ansible PXE Boot Playbook
 # Add Call to UI API to show step completed
+
+# TO DO
 # Add PING to ESXi to verify install
 # Add Call to UI API to show step completed
 
