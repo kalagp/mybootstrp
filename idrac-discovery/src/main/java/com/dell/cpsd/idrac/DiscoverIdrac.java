@@ -150,7 +150,7 @@ public class DiscoverIdrac
         {
             if (addr.isReachable(100))
             {
-                hostName = InetAddress.getByAddress(address).getHostName();
+                hostName = addr.getHostName();
             }
             else
             {
