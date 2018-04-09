@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="css/bootstrap-3.3.7.css">
+  <script src="js/jquery-3.3.1.min.js"></script>
+  <script src="js/bootstrap-3.3.7.min.js"></script>
+</head>
+<body>
+
+    <h2 align="center">Install ESXi</h2>
+
+    <form action='./startjob' method='post'>
+		<input name="job" type="text" value="install_esxi_job.sh" hidden>
+		<table width="50%" cellpadding="5" cellspacing="5" align="center">
+        <tr>
+			<td>ESXi version</td>
+			<td>
+			<select name="esxi_version">
+				<option value="6.5.0">6.5.0</option>
+				<option value="6.0.0">6.0.0</option>
+			</select>
+			</td>
+		</tr>
+		<tr>
+			<td>Select Disk</td>
+			<td>
+			<select name="node_disk_name">
+			  <option value="ATA">ATA</option>
+			</select>
+			</td>
+		</tr>
+        <tr>
+			<td>Hostname</td>
+			<td><input type="text" name="esxi_hostname" value=""></td>
+		</tr>
+		<tr>
+			<td>Root Password</td>
+			<td><input type="password" name="esxi_root_password" value=""></td>
+		</tr>
+        <tr>
+			<td>NIC</td>
+			<td><input type="text" name="esxi_nic" value=""></td>
+		</tr>
+		<tr>
+			<td>VLAN ID</td>
+			<td><input type="text" name="esxi_vlanid" value=""></td>
+		</tr>
+		<tr>
+			<td>IP Address</td>
+			<td><input type="text" name="idrac_ip" value=""></td>
+		</tr>
+		<tr>
+			<td>Netmask</td>
+			<td><input type="text" name="esxi_netmask" value=""></td>
+		</tr>
+		<tr>
+			<td>Gateway</td>
+			<td><input type="text" name="esxi_gateway" value=""></td>
+		</tr>
+		<tr>
+			<td>DNS Server</td>
+			<td><input type="text" name="esxi_dns" value=""></td>
+		</tr>
+		<tr>
+			<td>DNS Search</td>
+			<td><input type="text" name="esxi_dns_search" value=""></td>
+		</tr>
+		<tr>
+			<td><input type="checkbox" name="esxi_accepteula" checked disabled>&nbsp;I accept EULA</td>
+			<td><input type='submit' value='Install'></td>
+		</tr>
+		</table>
+    </form>
+
+
+</body>
+</html>
