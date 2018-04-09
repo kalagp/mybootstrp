@@ -11,21 +11,29 @@
 
 
     <form action='./startjob' method='post'>
-        <input name="job" type="text" value="testjob.cmd"><br>
-        <input name="custom" type="text" value="Data I want to enter"><br>
-        <select name="cars" multiple>
+        Which Job Example: <select name="job">
+		  <option value="com.dell.cpsd.bootstrap.classjobs.idracdiscovery.DiscoverIdrac">Discover iDRACs</option>
+		  <option value="com.dell.cpsd.bootstrap.classjobs.NoOpJob">Java Class Example: NoOpJob</option>
+		  <option value="com.dell.cpsd.bootstrap.classjobs.InvalidJob">Invalid Java Class Example: InvalidJob</option>
+		  <option value="testjob.cmd">Windows Shell: testjob.cmd</option>
+		  <option value="./testjob.sh">Linux Shell: testjob.sh</option>
+		</select><br>
+        Custom Variable: <input name="ipaddress" type="text" value="10.234.122.11-18"><br>
+        Custom Variable: <input name="custom" type="text" value="Data I want to enter"><br>
+        Select 0 or more Items:<select name="cars" multiple>
 		  <option value="volvo">Volvo</option>
 		  <option value="saab">Saab</option>
 		  <option value="opel">Opel</option>
 		  <option value="audi">Audi</option>
-		</select>
+		</select><br>
+		<!-- Hidden params OK -->
         <input type="hidden" name="var1" value="abc">
         <input type="hidden" name="var2" value="Number 2">
         <input type="hidden" name="var3" value="Three">
         <input type="hidden" name="ip" value="10.1.1.2">
+        <br>
         <input type='submit' value='Execute Local Test Job'>
     </form>
-
 
 </body>
 </html>

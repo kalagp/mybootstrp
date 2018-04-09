@@ -143,6 +143,9 @@ public class BootStrapWeb extends SpringBootServletInitializer
     // TODO
     public Long forkJob(String executable, Map<String, String[]> parameters, boolean useCommandShell)
     {
+        boolean javaJobStarted = false;
+        Runnable jobThread = null;
+        
         Long newJobId = (long) ((jobCounter++ % MAX_NUMBER_JOBS) + 1);
         
         if(currentJobs.get(newJobId) != null)
@@ -159,20 +162,56 @@ public class BootStrapWeb extends SpringBootServletInitializer
             }
         }
         
-        ExecProcess execProcess = new ExecProcess();
-        
-        execProcess.setJobId(newJobId);
-        execProcess.setTask(executable + " " + newJobId);
-        execProcess.setShellUse(useCommandShell);
-
         JobDetail newJob = new JobDetail();
         newJob.setJobId(newJobId);
         newJob.setJobName(executable);
         newJob.setProgress(0);
-        newJob.addMessage("Starting " + execProcess.getTask());
+        newJob.addMessage("Starting " + executable);
         newJob.setParameters(parameters);
+
+        try
+        {
+            BootStrapJob theJavaClass = null;
+            
+            Class<?> javaJob = Class.forName(executable);
+            if(javaJob != null)
+            {
+                theJavaClass = (BootStrapJob)javaJob.newInstance();
+                if(theJavaClass instanceof BootStrapJob)
+                {
+                    System.out.println("There is a class for this job");
+                    theJavaClass.setMyJob(newJob);
+                    jobThread = theJavaClass;
+//                    theJavaClass.executeJob();
+//                    javaJobStarted = true;
+                }
+            }
+            else
+            {
+                System.out.println("class not found");
+            }
+        }
+        catch( ClassCastException invalidClass)
+        {
+            System.out.println("Class is an invalid job class");
+        }
+        catch(Exception notAClass)
+        {
+            System.out.println("Exception class not found");
+        }
+
+        if(jobThread == null)
+        {
+            ExecProcess execProcess = new ExecProcess();
+            
+            execProcess.setJobId(newJobId);
+            execProcess.setTask(executable + " " + newJobId);
+            execProcess.setShellUse(useCommandShell);
+            
+            jobThread = execProcess;
+        }
         
-        Thread thread = new Thread(execProcess);
+        Thread thread = new Thread(jobThread);
         
         System.out.println("ADDING JOB " + newJob.getJobId());
         currentJobs.put(newJob.getJobId(), newJob);
@@ -258,7 +297,14 @@ public class BootStrapWeb extends SpringBootServletInitializer
 
         public void setProgress(int progress)
         {
-            this.progress = progress;
+            if(progress > 100)
+            {
+                this.progress = 100;
+            }
+            else
+            {
+                this.progress = progress;
+            }
         }
 
         public ArrayList<String> getMessages()
@@ -329,7 +375,6 @@ public class BootStrapWeb extends SpringBootServletInitializer
                         commandLine
                         };
                 
-                
                 if (!useShell)
                 {
                     app = r.exec(commandLine);
@@ -361,6 +406,7 @@ public class BootStrapWeb extends SpringBootServletInitializer
             catch (IOException e)
             {
                 e.printStackTrace();
+                currentJobs.get(this.jobId).addConsoleMessage("ERROR: Failed to start process");
             }
             finally
             {
