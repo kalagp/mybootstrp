@@ -12,6 +12,7 @@
 		<h2>JOB Id ${jobid}</h2>
 		<h2>progress ${progress}</h2>
 		<h2>messages ${messages}</h2>
+        <progress value="${progress}" max="100"></progress>
 	</div>
 
 </body>

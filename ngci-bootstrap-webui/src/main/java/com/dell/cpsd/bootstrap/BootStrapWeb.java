@@ -10,8 +10,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -27,53 +28,66 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 // Will have a hash map of jobs, ID {[messages,...],progress}
-// To limit memory useage, we will keep depth at 10
+// To limit memory usage, we will keep depth at 10 (MAX_NUMBER_JOBS)
 
 @SpringBootApplication
 @Controller
 public class BootStrapWeb extends SpringBootServletInitializer  
 {
+    private static int MAX_NUMBER_JOBS = 10;
     private static String OS = System.getProperty("os.name").toLowerCase();
 
-    static ArrayList<String> execResults = new ArrayList<String>();
-    
     static int jobCounter = 0;
     
     HashMap<Long,JobDetail> currentJobs = new HashMap<Long,JobDetail>();
     
-    @RequestMapping("/hello")
-    public String hiThere(Map<String, Object> model)
-    {
-        System.out.println("You had me at hello");
-        model.put("data1", "data1 object");
-        model.put("data2", "data2 object");
-        return "welcome";
-    }
-    
-    @RequestMapping("/resultstxt")
+    @RequestMapping("/reset")
     @ResponseBody
-    public ArrayList<String> results()
+    public String reset()
     {
-        ArrayList<String> response = new ArrayList<String>();
-        response.add("Actual Results:");
-        response.addAll(execResults);
-        return response;
+        currentJobs.clear();
+        return "Results cleared";
     }
 
+    @RequestMapping("/jobs")
+    //public String getJobs(Map<String,Object> jobs, HttpServletRequest request)
+    public String getJobs( HttpServletRequest request)
+    {
+        doWork();
+        
+        request.setAttribute("jobList", currentJobs);
+        return "JobsList";
+    }
+    
+    // See testjob.html
     @RequestMapping(value = "/exectest", method = RequestMethod.POST)
     public String doWork()
     {
+        Long newJobId = (long) ((jobCounter++ % MAX_NUMBER_JOBS) + 1);
         
-        System.out.println("POST CAlled on " + OS);
-        execResults.clear();
+        if(currentJobs.get(newJobId) != null)
+        {
+            if(currentJobs.get(newJobId).getProgress() != 100 )
+            {
+                System.out.println("Job queue may be full");
+                return "error";
+            }
+            else
+            {
+                // Destroy old job
+                currentJobs.remove(newJobId);
+            }
+        }
+        
         ExecProcess execProcess = new ExecProcess();
-        //execProcess.setTask("do_test.sh");
 
         JobDetail newJob = new JobDetail();
         // jobid to var, wipe old one from mem first/?
-        newJob.setJobId((jobCounter++ % 10) + 1);
+        newJob.setJobId(newJobId);
+        newJob.setJobName("testjob");
         newJob.setProgress(0);
-
+        
+        execProcess.setJobId(newJobId);
         
         if(OS.indexOf("win") >= 0)
         {
@@ -85,21 +99,57 @@ public class BootStrapWeb extends SpringBootServletInitializer
             execProcess.setTask("testjob.sh " + newJob.getJobId());
         }
 
-        newJob.addMessages("Starting " + execProcess.getTask());
-         
+        newJob.addMessage("Starting " + execProcess.getTask());
+
+        System.out.println("ADDING JOB " + newJob.getJobId());
+        currentJobs.put(newJob.getJobId(), newJob);
         
         Thread thread = new Thread(execProcess);
         
-        if(currentJobs.size() > 9)
+        thread.start();
+        return "redirect:./results/" + newJob.getJobId();
+    }
+    
+    // TODO
+    public Long forkJob(String executable, boolean useCommandShell)
+    {
+        Long newJobId = (long) ((jobCounter++ % MAX_NUMBER_JOBS) + 1);
+        
+        if(currentJobs.get(newJobId) != null)
         {
-            System.out.print("Need to prune JOBS");
+            if(currentJobs.get(newJobId).getProgress() != 100 )
+            {
+                System.out.println("Job queue may be full");
+                return -1L;
+            }
+            else
+            {
+                // Destroy old job
+                currentJobs.remove(newJobId);
+            }
         }
+        
+        ExecProcess execProcess = new ExecProcess();
+
+        
+        execProcess.setJobId(newJobId);
+        execProcess.setTask(executable + " " + newJobId);
+        execProcess.setShellUse(useCommandShell);
+
+        JobDetail newJob = new JobDetail();
+        newJob.setJobId(newJobId);
+        newJob.setJobName(executable);
+        newJob.setProgress(0);
+        newJob.addMessage("Starting " + execProcess.getTask());
+        
+        Thread thread = new Thread(execProcess);
         
         System.out.println("ADDING JOB " + newJob.getJobId());
         currentJobs.put(newJob.getJobId(), newJob);
         
         thread.start();
-        return "redirect:./results/" + newJob.getJobId();
+        
+        return newJobId;
     }
 
     @RequestMapping(value = "/status", method = RequestMethod.POST)
@@ -114,7 +164,7 @@ public class BootStrapWeb extends SpringBootServletInitializer
         }
         
         job.setProgress(Math.min(progress, 100));
-        job.addMessages(message);
+        job.addMessage(message);
 
         return new ResponseEntity("Status updated", HttpStatus.CREATED);
     }
@@ -134,11 +184,13 @@ public class BootStrapWeb extends SpringBootServletInitializer
         return "displayprogress";
     }
 
-    private class JobDetail
+    public class JobDetail
     {
         long              jobId;
+        String            jobName;
         int               progress;
         ArrayList<String> messages = new ArrayList<String>();
+        ArrayList<String> consoleMessages = new ArrayList<String>();
 
         public long getJobId()
         {
@@ -148,6 +200,16 @@ public class BootStrapWeb extends SpringBootServletInitializer
         public void setJobId(long jobId)
         {
             this.jobId = jobId;
+        }
+
+        public String getJobName()
+        {
+            return jobName;
+        }
+
+        public void setJobName(String jobName)
+        {
+            this.jobName = jobName;
         }
 
         public int getProgress()
@@ -165,9 +227,29 @@ public class BootStrapWeb extends SpringBootServletInitializer
             return messages;
         }
 
-        public void addMessages(String message)
+        public void setMessages(ArrayList<String> messages)
+        {
+            this.messages = messages;
+        }
+
+        public void addMessage(String message)
         {
             this.messages.add(message);
+        }
+
+        public void setConsoleMessages(ArrayList<String> consoleMessages)
+        {
+            this.consoleMessages = consoleMessages;
+        }
+
+        public ArrayList<String> getConsoleMessages()
+        {
+            return consoleMessages;
+        }
+
+        public void addConsoleMessage(String message)
+        {
+            this.consoleMessages.add(message);
         }
     }
 
@@ -175,9 +257,11 @@ public class BootStrapWeb extends SpringBootServletInitializer
     {
         private String commandLine = "ls";
         private boolean useShell = true;
+        private Long jobId = 0L;
         
         public void run()
         {
+            System.out.println("Starting Job ID " + jobId);
             Runtime r = Runtime.getRuntime();
             Process app = null;
             BufferedReader output = null;
@@ -214,7 +298,10 @@ public class BootStrapWeb extends SpringBootServletInitializer
                         System.out.flush();
                         break;
                     }
-                    execResults.add(line);
+                    System.out.println(currentJobs);
+                    System.out.println(line);
+                    System.out.println(currentJobs.get(this.jobId));
+                    currentJobs.get(this.jobId).addConsoleMessage(line);
                 }
             }
             catch (IOException e)
@@ -249,7 +336,7 @@ public class BootStrapWeb extends SpringBootServletInitializer
                 }
                 System.err.println("Process done, exit status was " + app.exitValue());
             }
-            execResults.add("ThatsAll");
+            currentJobs.get(this.jobId).addConsoleMessage("ThatsAll");
             System.out.println("ExecProcess Completed");
         }
         
@@ -266,6 +353,16 @@ public class BootStrapWeb extends SpringBootServletInitializer
         public void setShellUse(boolean value)
         {
             this.useShell = value;
+        }
+
+        public Long getJobId()
+        {
+            return jobId;
+        }
+
+        public void setJobId(Long newJobId)
+        {
+            this.jobId = newJobId;
         }
     }
 
