@@ -107,7 +107,7 @@ public class DiscoverIdrac extends BootStrapJob
                     discovered.add(compute);
 
                     // progress message here
-                    String consoleMessage = String.format("iDrac IP: %s, Hostname: %s, Type: %s\n", compute.getIp(), compute.getHostName(), compute.getEndPointType());
+                    String consoleMessage = String.format("iDrac IP: %s, Hostname: %s, Type: %s", compute.getIp(), compute.getHostName(), compute.getEndPointType());
                     this.getMyJob().addConsoleMessage(consoleMessage);
                 }
                 catch (RestClientException e)

@@ -9,8 +9,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
@@ -82,9 +84,20 @@ public class BootStrapWeb extends SpringBootServletInitializer
             //System.out.println("ParamerName: " + key + "-->" + String.join(",", values));
         }
 
+        String redirectLocation = request.getParameter("redirecturl");
+        if(redirectLocation == null)
+        {
+            redirectLocation = "./results/";
+        }
+        
+        if(redirectLocation.endsWith("/") == false)
+        {
+            redirectLocation += "/";
+        }
+        
         newJobId = forkJob(job, parameters, (OS.indexOf("win") == -1));
         
-        return "redirect:./results/" + newJobId;
+        return "redirect:" + redirectLocation + newJobId;
     }
     
     // TODO
@@ -191,6 +204,39 @@ public class BootStrapWeb extends SpringBootServletInitializer
     {
         JobDetail job = currentJobs.get(jobId);
         return job;
+    }
+    
+    // IDRAC SCAN SPECIFIC
+    @RequestMapping(value = {"/jobdetails/idracscan","/jobdetails/idracscan/{jobid}"}, method = RequestMethod.GET)
+    public String scanRresults(@PathVariable Map<String, String> pathVariables, Map<String, Object> results)
+    {
+        long jobId = -1L;
+        if (pathVariables.containsKey("jobid"))
+        {
+            jobId = Long.parseLong(pathVariables.get("jobid"));
+        }
+
+        JobDetail job = results(jobId);
+        if(job != null)
+        {
+            Map<String, Object> idracInfo = new HashMap<String, Object>();
+            
+            ArrayList<String> consoleMessages = new ArrayList<>(job.getConsoleMessages());
+            for(String output : consoleMessages)
+            {
+                HashMap<String, String> data = new HashMap<String, String>();
+                List<String> idracAttrs = new ArrayList<String>(Arrays.asList(output.split(",")));
+                for(String attrs : idracAttrs)
+                {
+                    String[] t = attrs.trim().split(":");
+                    data.put(t[0].replace(" ", "").trim().toLowerCase(), t[1].trim());
+                }
+                idracInfo.put(data.get("iDracIP".toLowerCase()), data);
+            }
+            
+            results.put("idracsdata",idracInfo);
+        }
+        return "IdracScanner2";
     }
 
     @RequestMapping(value = "/results/{jobid}", method = RequestMethod.GET)
