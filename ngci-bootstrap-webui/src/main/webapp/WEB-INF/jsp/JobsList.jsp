@@ -19,52 +19,52 @@
 
 </head>
 <body>
+<div class="container">
  <h1>Job List</h1>
 <hr>
-<table>
-	<tr>
-		<th>JobID</th>
-		<th>Name</th>
-		<th>progress</th>
-		<th>Log Message</th>
-		<th>Console Output</th>
-		<th>Job Parameters</th>
-	</tr>
+<table class="table">
+    <tr>
+        <th>JobID</th>
+        <th>Name</th>
+        <th>progress</th>
+        <th>Log Message</th>
+        <th>Console Output</th>
+        <th>Job Parameters</th>
+    </tr>
 <c:forEach items="${jobList}" var="job">
-	<tr>
-		<td>${job.value.jobId}</td>
-		<td>${job.value.jobName}</td>
-		<td><progress value="${job.value.progress}" max="100"></progress>${job.value.progress}</td>
-		<td>
-			<ol>
-		    <c:forEach items="${job.value.messages}" var="message">
-        		<li>${message}</li>
+    <tr>
+        <td>${job.value.jobId}</td>
+        <td>${job.value.jobName}</td>
+        <td><progress value="${job.value.progress}" max="100"></progress>${job.value.progress}</td>
+        <td>
+            <ol>
+            <c:forEach items="${job.value.messages}" var="message">
+                <li>${message}</li>
             </c:forEach>
             </ol>
-		</td>
-		<td>
-			<ol>
-		    <c:forEach items="${job.value.consoleMessages}" var="consolemessage">
-        		<li>${consolemessage}</li>
+        </td>
+        <td>
+            <ol>
+            <c:forEach items="${job.value.consoleMessages}" var="consolemessage">
+                <li>${consolemessage}</li>
             </c:forEach>
             </ol>
-		</td>
-		<td>
-			<ul>
-		    <c:forEach items="${job.value.parameters}" var="parameters">
-	        		<li>${parameters.key} == [
-					    <c:forEach items="${parameters.value}" var="parameter" varStatus="loop">
-			        		${parameter}${!loop.last ? ',' : ''}
-			            </c:forEach>
-			            ]
+        </td>
+        <td>
+            <ul>
+            <c:forEach items="${job.value.parameters}" var="parameters">
+                    <li>${parameters.key} == [
+                        <c:forEach items="${parameters.value}" var="parameter" varStatus="loop">
+                            ${parameter}${!loop.last ? ',' : ''}
+                        </c:forEach>
+                        ]
             </c:forEach>
             </ul>
-		</td>
-	</tr>
+        </td>
+    </tr>
 </c:forEach>
 </table>
-
 <hr>
-
+</div>
 </body>
 </html>
