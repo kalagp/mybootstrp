@@ -34,12 +34,6 @@ import java.util.Set;
 
 public class DiscoverIdrac extends BootStrapJob
 {
-    static
-    {
-        System.setProperty("sun.net.spi.nameservice.nameservers", "10.136.112.220" );
-        System.setProperty("sun.net.spi.nameservice.provider.1", "dns,sun" );
-    }
-
     private static final Logger log = LoggerFactory.getLogger(DiscoverIdrac.class);
 
     /**
@@ -111,6 +105,10 @@ public class DiscoverIdrac extends BootStrapJob
                     compute.setIp(ip);
                     compute.setHostName(hostName);
                     discovered.add(compute);
+
+                    // progress message here
+                    String consoleMessage = String.format("iDrac IP: %s, Hostname: %s, Type: %s\n", compute.getIp(), compute.getHostName(), compute.getEndPointType());
+                    this.getMyJob().addConsoleMessage(consoleMessage);
                 }
                 catch (RestClientException e)
                 {
@@ -250,10 +248,7 @@ public class DiscoverIdrac extends BootStrapJob
             
             for (Compute compute : discovered)
             {
-                String consoleMessage = String.format("iDrac IP: %s, Hostname: %s, Type: %s\n", compute.getIp(), compute.getHostName(), compute.getEndPointType());
-
-                this.getMyJob().addConsoleMessage(consoleMessage);
-                System.out.format(consoleMessage);
+                System.out.format("iDrac IP: %s, Hostname: %s, Type: %s\n", compute.getIp(), compute.getHostName(), compute.getEndPointType());
             }
         }
         else
