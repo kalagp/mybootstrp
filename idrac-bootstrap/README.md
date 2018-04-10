@@ -34,6 +34,14 @@ Note that to export configuration as xml, set request header field "accept" as "
  
 It will update the DNSs of IDRAC 10.234.122.15.
 
+To change the ip address, the Body passed in the call would be something like:
+ {
+  	  "IPv4Static.1#Address":"10.234.122.8"
+ }
+ 
+That would change the ip address from 10.234.122.15 to 10.234.122.8.
+Note that some action such as ip change, may take up to 10 minutes to finish.
+
 ## Before you begin
 
 
