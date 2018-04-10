@@ -13,9 +13,9 @@
 <title>Jobs</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/bootstrap/css/bootstrap-3.3.7.css">
-  <script src="/bootstrap/js/jquery-3.3.1.min.js"></script>
-  <script src="/bootstrap/js/bootstrap-3.3.7.min.js"></script>
+  <link rel="stylesheet" href="/css/bootstrap-3.3.7.css">
+  <script src="/js/jquery-3.3.1.min.js"></script>
+  <script src="/js/bootstrap-3.3.7.min.js"></script>
 
 </head>
 <body>

@@ -34,6 +34,7 @@ import org.springframework.http.ResponseEntity;
 
 @SpringBootApplication
 @Controller
+@RequestMapping("/bootstrap")
 public class BootStrapWeb extends SpringBootServletInitializer  
 {
     private static int MAX_NUMBER_JOBS = 10;
@@ -43,6 +44,13 @@ public class BootStrapWeb extends SpringBootServletInitializer
     
     HashMap<Long,JobDetail> currentJobs = new HashMap<Long,JobDetail>();
     
+    @RequestMapping
+    @ResponseBody
+    public String bootStrapHome()
+    {// Welcome page, non-rest
+        return "Welcome to Simple Web Worker Example.";
+    }
+
     @RequestMapping("/reset")
     @ResponseBody
     public String reset()
@@ -55,69 +63,8 @@ public class BootStrapWeb extends SpringBootServletInitializer
     //public String getJobs(Map<String,Object> jobs, HttpServletRequest request)
     public String getJobs(HttpServletRequest request)
     {
-        // TODO Remove
-        if (currentJobs.size() == 0)
-        {
-            doWork();
-        }
-
         request.setAttribute("jobList", currentJobs);
         return "JobsList";
-    }
-    
-    // See testjob.html
-    @RequestMapping(value = "/exectest", method = RequestMethod.POST)
-    public String doWork()
-    {
-        Long newJobId = (long) ((jobCounter++ % MAX_NUMBER_JOBS) + 1);
-        
-        if(currentJobs.get(newJobId) != null)
-        {
-            if(currentJobs.get(newJobId).getProgress() != 100 )
-            {
-                System.out.println("Job queue may be full");
-                return "error";
-            }
-            else
-            {
-                // Destroy old job
-                currentJobs.remove(newJobId);
-            }
-        }
-        
-        ExecProcess execProcess = new ExecProcess();
-
-        JobDetail newJob = new JobDetail();
-        // jobid to var, wipe old one from mem first/?
-        newJob.setJobId(newJobId);
-        newJob.setJobName("Internal testjob");
-        newJob.setProgress(0);
-        
-        Map<String, String[]> dummyArgs= new HashMap<String, String[]>();
-        
-        dummyArgs.put("arg1", new String[]{"one", "two", "333"});
-        newJob.setParameters(dummyArgs);
-       
-        execProcess.setJobId(newJobId);
-        
-        if(OS.indexOf("win") >= 0)
-        {
-            execProcess.setTask("testjob.cmd " + newJob.getJobId());
-            execProcess.setShellUse(false);
-        }
-        else
-        {
-            execProcess.setTask("testjob.sh " + newJob.getJobId());
-        }
-
-        newJob.addMessage("Starting " + execProcess.getTask());
-
-        System.out.println("ADDING JOB " + newJob.getJobId());
-        currentJobs.put(newJob.getJobId(), newJob);
-        
-        Thread thread = new Thread(execProcess);
-        thread.start();
-        return "redirect:./results/" + newJob.getJobId();
     }
 
     @RequestMapping(value = "/startjob", method = RequestMethod.POST)
