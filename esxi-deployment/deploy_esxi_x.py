@@ -21,20 +21,26 @@ print('')
 #resp = requests.post('http://localhost:8300/bootstrap/jobdetails/1')
 
 #input_json = '{"idrac_ip":"10.234.122.15","node_ip":"172.31.128.14","node_disk_name":"ATA","esxi_version":"6.5","esxi_hostname":"rvx2-host06","esxi_ip":"10.234.122.76","esxi_netmask":"255.255.255.192","esxi_gateway":"10.234.122.65","esxi_dns":"10.136.112.220","esxi_dns_search":"lab.vce.com","esxi_nic":"vmnic1","esxi_vlanid":"126","esxi_root_password":"Vc3m0l@b","esxi_accepteula":"true"}'
-
 # Set Arguments
 parser = argparse.ArgumentParser()
 #parser.add_argument('--input_json', required=True)
 parser.add_argument('--jobid', required=True)
 args = parser.parse_args()
-my_jobid = args.jobid
-resp = requests.post('http://localhost:8400/bootstrap/jobdetails/' + my_jobid')
+jobid = args.jobid
+resp = requests.get('http://localhost:8400/bootstrap/jobdetails/' + jobid)
 
-#payload = {'jobid': jobid, 'progress': 0, 'message': 'Started'}
-#resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=payload)
+#resp.status_code = 200
+#resp.text = {"jobId":1,"jobName":"install_esxi_job.sh","progress":0,"messages":["Starting install_esxi_job.sh 1"],"consoleMessages":["ThatsAll"],"parameters":{"esxi_root_password":["hello"],"node_disk_name":["ATA"],"esxi_netmask":["255.255.255.255"],"esxi_dns":["10.1.30.134"],"esxi_nic":["vnic0"],"idrac_ip":["10.1.1.1"],"esxi_hostname":["a.host.name"],"job":["install_esxi_job.sh"],"esxi_dns_search":["abc.local.com"],"esxi_version":["6.5.0"],"esxi_vlanid":["25"],"esxi_gateway":["10.100.3.45"]}}
+#input_json = parameters
 
-input_json = args.input_json
-input_json = json.loads(input_json)
+ 
+progress_payload = {'jobid': jobid, 'progress': 0, 'message': 'Started'}
+progress_resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=progress_payload)
+
+#input_json = args.input_json
+input_json = {}
+for key in resp.json()['parameters']:
+    input_json[key] = resp.json()['parameters'][key][0]
 
 # Print Input
 print('IDRAC IP: %s' % input_json['idrac_ip'])
@@ -52,6 +58,9 @@ print('ESXi VLAN: %s' % input_json['esxi_vlanid'])
 print('ESXi Root Password: **********')
 print('ESXi EULA Accepted: %s' % input_json['esxi_accepteula'])
 print('')
+
+if input_json['esxi_accepteula'] != 'on':
+    raise Exception('Unaccept ESXi EULA')
 
 # Set Hex File Names
 hex_ip = input_json['node_ip']
@@ -71,12 +80,14 @@ my_file_contents = my_file_contents + '    APPEND initrd=deblive/initrd1 boot=li
 my_file_contents = my_file_contents + 'ONERROR LOCALBOOT 0\n'
 my_file_contents = my_file_contents + '\n'
 my_file_contents = my_file_contents + 'LABEL esxi\n'
-if input_json['esxi_version'] == '6.5':
+if input_json['esxi_version'] == '6.5' or input_json['esxi_version'] == '6.5.0':
     my_file_contents = my_file_contents + '    KERNEL images/ESXi-6.5.0/mboot.c32\n'
     my_file_contents = my_file_contents + '    APPEND -c images/ESXi-6.5.0/boot.cfg ks=http://172.31.128.1/esxi_ksFiles/' + ks_file_name + '\n'
-else:
+elif input_json['esxi_version'] == '6.0' or input_json['esxi_version'] == '6.0.0':
     my_file_contents = my_file_contents + '    KERNEL images/ESXi-6.0.0/mboot.c32\n'
     my_file_contents = my_file_contents + '    APPEND -c images/ESXi-6.0.0/boot.cfg ks=http://172.31.128.1/esxi_ksFiles/' + ks_file_name + '\n'
+else:
+    raise Exception('Invalid ESXi version')
 my_file_contents = my_file_contents + '    IPAPPEND 2\n'
 my_file_contents = my_file_contents + 'ONERROR LOCALBOOT 0\n'
 my_file_contents = my_file_contents + '\n'
@@ -85,17 +96,14 @@ with open('/var/lib/tftpboot/pxelinux.cfg/' + hex_file_name, 'w') as my_file_han
     my_file_handle.write(my_file_contents)
 # TO DO
 # Add Call to UI API to show step completed
-#payload = {'jobid': jobid, 'progress': 30, 'message': 'Files Created'}
-#resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=payload)
+progress_payload = {'jobid': jobid, 'progress': 30, 'message': 'Files Created'}
+progress_resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=progress_payload)
 
 # Set Kiickstart File Content
 my_file_contents = '##### Stage 01 - Pre installation:	\n'
 my_file_contents = my_file_contents + '\n'
 my_file_contents = my_file_contents + '    ### Accept the VMware End User License Agreement\n'
-if input_json['esxi_accepteula'] == 'true':
-    my_file_contents = my_file_contents + '    vmaccepteula\n'
-else:
-    my_file_contents = my_file_contents + '\n'
+my_file_contents = my_file_contents + '    vmaccepteula\n'
 my_file_contents = my_file_contents + '\n'
 my_file_contents = my_file_contents + '    ### Set the root password for the DCUI and Tech Support Mode\n'
 my_file_contents = my_file_contents + '    rootpw ' + input_json['esxi_root_password'] + '\n'
@@ -127,9 +135,11 @@ with open('/var/www/lighttpd/esxi_ksFiles/' + ks_file_name, 'w') as my_file_hand
 # Add Call to UI API to show step completed
 
 # PXE Boot Node
-#payload = {'jobid': jobid, 'progress': 75, 'message': 'PXE Booting'}
-#resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=payload)
-os.system('ansible-playbook set_boot_then_reboot.yml')
+progress_payload = {'jobid': jobid, 'progress': 75, 'message': 'PXE Booting'}
+progress_resp = requests.post('http://10.234.122.102:8400/bootstrap/status', params=progress_payload)
+
+# os.system('ansible-playbook set_boot_then_reboot.yml')
+
 # TO DO
 # Add Call to UI API to show step completed
 

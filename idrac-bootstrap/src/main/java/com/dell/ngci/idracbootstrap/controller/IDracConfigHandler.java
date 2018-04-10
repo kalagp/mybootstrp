@@ -14,6 +14,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.w3c.dom.Element;
@@ -30,12 +31,20 @@ import java.util.Map;
 public class IDracConfigHandler {
     private static Logger logger = LoggerFactory.getLogger(IDracConfigHandler.class);
 
+    @Value("${max.wait.ms:300000}")
+    private long maxwait;
+
     @Autowired
     CustomRestTemplate customRestTemplate;
 
     @GetMapping("/find")
     public ResponseEntity<List<IDracInstance>> findIDracInstances(@RequestParam String ipRange)
     {
+        return null;
+    }
+
+    @PostMapping("/import/{ipaddress}")
+    public ResponseEntity<?> importIDracConfiguration(HttpServletRequest request, @PathVariable String ipaddress, @RequestBody Network4Setting networkSetting ) throws Exception {
         return null;
     }
 
@@ -49,6 +58,7 @@ public class IDracConfigHandler {
         // set any that has a value from the input
         SystemConfiguration systemConfiguration = systemConfigurationResponseEntity.getBody();
 
+        String ipChanged = null;
         for (SystemComponent component : systemConfiguration.getComponents())
         {
             if ("iDRAC.Embedded.1".equals(component.getFqdd())) // found idrac
@@ -72,8 +82,18 @@ public class IDracConfigHandler {
                     }  else {
                         logger.info("updating attribute: "+entry.getKey()+" "+entry.getValue());
                     }
-                    attributeToUpdate.setValue(entry.getValue());
-                    attributes.add(attributeToUpdate);
+                    if (!entry.getValue().equals(attributeToUpdate.getValue())) {
+                        attributeToUpdate.setValue(entry.getValue());
+                        attributes.add(attributeToUpdate);
+                        if ("IPv4Static.1#Address".equals(attributeToUpdate.getName()) && !("" + ipaddress).equals(attributeToUpdate.getValue())) {
+                            ipChanged = attributeToUpdate.getValue();
+                        }
+                    } else {
+                        logger.info("Skip attribute "+entry.getKey()+" with the same value with the existing setting:" +entry.getValue());
+                    }
+                }
+                if (attributes.isEmpty()){
+                    throw new Exception("All attributes are the same as current settings. No change made.");
                 }
                 component.setAttributes(attributes);
                 break;
@@ -109,6 +129,8 @@ public class IDracConfigHandler {
         }
 
 
+        long ms = System.currentTimeMillis();
+
         ResponseEntity<Object> status;
         do {
             Thread.sleep(1000L);
@@ -117,9 +139,36 @@ public class IDracConfigHandler {
                     null, Object.class);
             logger.info("call "+location+" returned "+status.getStatusCode());
             // FIXME: if the ipaddress changed, this could throw exception or error out, need to handle the case
+            if (status.getStatusCode() == HttpStatus.OK)
+            {
+                break;
+            }
+        }while (System.currentTimeMillis()-ms < maxwait);
 
-        }while (status.getStatusCode() != HttpStatus.OK);
+        if (ipChanged != null)
+        {
+            logger.info("waiting system to comeback after ip changed to "+ipChanged);
+            //Sleep 30s first
+            Thread.sleep(30000);
 
+            ms = System.currentTimeMillis();
+            do {
+                Thread.sleep(1000L);
+                try {
+                    status = callRemoteRestApi(username, password, HttpMethod.GET,
+                            "https://" + ipChanged + location,
+                            null, Object.class);
+                    logger.info("call " + ipChanged + " " + location + " returned " + status.getStatusCode());
+                    if (status.getStatusCode() == HttpStatus.OK) {
+                        break;
+                    }
+                }catch(Exception e)
+                {
+                    logger.info("waiting system to come back: "+ipChanged+" "+e);
+                }
+            }while (System.currentTimeMillis()-ms < maxwait);
+
+        }
 
         return new ResponseEntity<Object>(status.getBody(), status.getStatusCode());
     }
