@@ -7,12 +7,12 @@
 </head>
 <body>
 
-    <h2 align="center">Install ESXi</h2>
+	<h2 align="center">Install ESXi</h2>
 
-    <form action='./startjob' method='post'>
+	<form action='./startjob' method='post'>
 		<input name="job" type="text" value="/root/install_esxi_job.sh" hidden>
 		<table width="50%" cellpadding="5" cellspacing="5" align="center">
-        <tr>
+		<tr>
 			<td>ESXi version</td>
 			<td>
 			<select name="esxi_version">
@@ -29,25 +29,33 @@
 			</select>
 			</td>
 		</tr>
-        <tr>
+		<tr>
+			<td>Idrac IP Address</td>
+			<td><input type="text" name="idrac_ip" value=""></td>
+		</tr>
+		<tr>
+			<td>DHCP IP Address</td>
+			<td><input type="text" name="node_ip" value=""></td>
+		</tr>
+		<tr>
+			<td>ESXi Host IP Address</td>
+			<td><input type="text" name="esxi_ip" value=""></td>
+		</tr>
+		<tr>
 			<td>Hostname</td>
 			<td><input type="text" name="esxi_hostname" value=""></td>
 		</tr>
 		<tr>
 			<td>Root Password</td>
-			<td><input type="password" name="esxi_root_password" value=""></td>
+			<td><input type="text" name="esxi_root_password" value=""></td>
 		</tr>
-        <tr>
+		<tr>
 			<td>NIC</td>
 			<td><input type="text" name="esxi_nic" value=""></td>
 		</tr>
 		<tr>
 			<td>VLAN ID</td>
 			<td><input type="text" name="esxi_vlanid" value=""></td>
-		</tr>
-		<tr>
-			<td>IP Address</td>
-			<td><input type="text" name="idrac_ip" value=""></td>
 		</tr>
 		<tr>
 			<td>Netmask</td>
@@ -70,8 +78,6 @@
 			<td><input type='submit' value='Install'></td>
 		</tr>
 		</table>
-    </form>
-
-
+	</form>
 </body>
 </html>
